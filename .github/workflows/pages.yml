@@ -25,7 +25,7 @@ jobs:
           do
             (cd build/$c;npm install;npx rollup -c example/rollup.config.mjs)
             mkdir -p build/components/$c
-            cp -R build/$c/example build/components/$c
+            cp -R build/$c/example/public build/components/$c
             rm -rf build/$c
           done
       - name: Deploy to GitHub Pages
