@@ -886,8 +886,7 @@ class BaseRouter {
   get state() {
     return {
       params: { ...this.params },
-      route: this.route,
-      pathname: window.location.pathname
+      route: this.route
     };
   }
 
@@ -979,7 +978,7 @@ class BaseRouter {
 
   /**
    * Find Route for a given object(s)
-   * @param {Object} object
+   * @param {Object} objects
    * @return {Route} able to support given object
    */
   routeFor(...objects) {
@@ -1137,6 +1136,8 @@ function sequenceGuard(children) {
  * @property {number} priority
  * @property {string[]} keys as found in the path
  * @property {RegEx} regex
+ * @property {any} value
+ * @property {any} defaultValue
  */
 class SkeletonRoute {
   static get isRoute() {
@@ -1172,31 +1173,47 @@ class SkeletonRoute {
   }
 
   /**
-   * Extract properties from object(s).
-   * @return {object} properties extracted from given objects
+   * Extract properties from object.
+   * @param {Object} object
+   * @return {Object} properties extracted from given objects
    */
-  propertiesFor(...objects) {
-    if(this.parent) {
-      object = objects.shift();
-      return this.parent.propertiesFor(...objects);
+  propertiesFor(object) {
+    const pp = this.parent ? this.parent.propertiesFor(object) : undefined;
+ 
+    if(this.keys.length === 0) {
+      return pp;
     }
 
-    return undefined;
+    return Object.assign(Object.fromEntries(this.keys.map(key => [key, object[key]])), pp);
   }
 
   /**
    * Deliver object for a given set of properties
-   * @param {object} properties
-   * @return {object} for matching properties
+   * @param {Object} properties
+   * @return {Object} for matching properties
    */
   objectFor(properties) {
-    if(this.parent) {
-      return this.parent.objectFor(properties);
-    }
+    return this.parent ? this.parent.objectFor(properties) : undefined;
+  }
 
+  /**
+   * Default value used for store.
+   * @return {any}
+   */
+  get defaultValue()
+  {
     return undefined;
   }
 
+  /**
+   * Value used for store.
+   * @return {any}
+   */
+  get value()
+  {
+    return this.defaultValue;
+  }
+  
   /**
    * Full path of the Route including all parents
    * @return {string} path
@@ -1209,7 +1226,7 @@ class SkeletonRoute {
 /**
  * Helper function to create routes with optional guards
  * @param {Route?} parent
- * @param {string} path
+ * @param {string?} path
  * @param {Route?} factory
  * @param {Guard|SvelteComponent[]} args last one must be a SvelteComponent
  */
@@ -1379,10 +1396,7 @@ function instance$1($$self, $$props, $$invalidate) {
 	const parent = getContext(ROUTE);
 	const router = getContext(ROUTER);
 	const route = new factory();
-
-	//console.log(parent, path);
 	setContext(ROUTE, route);
-
 	route.localPath = path;
 	route.component = component;
 
@@ -2067,19 +2081,10 @@ class StoreRoute extends SkeletonRoute {
     Object.defineProperties(this, properties);
   }
 
-  get defaultValue()
-  {
-    return undefined;
-  }
-
   subscribe(subscription) {
     this.subscriptions.add(subscription);
     subscription(this.value);
     return () => this.subscriptions.delete(subscription);
-  }
-
-  propertiesFor(object) {
-    return this.keys.length === 0 ? undefined : Object.fromEntries(this.keys.map(key => [key, object[key]]));
   }
 }
 
