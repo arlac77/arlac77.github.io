@@ -1,0 +1,28 @@
+name: pages
+
+on: push
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          repository: 'arlac77/svelte-guard-history-router'
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 14.5.0
+      - run: npm install
+      - run: |
+          npx rollup -c example/rollup.config.mjs
+          mkdir -p components/svelte-guard-history-router
+          cp -R example/public/* components/svelte-guard-history-router
+      -
+        name: Deploy to GitHub Pages
+        if: success()
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          target_branch: gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
