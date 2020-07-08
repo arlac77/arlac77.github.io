@@ -9,27 +9,25 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: 'arlac77/svelte-guard-history-router'
-          path: build/components/svelte-guard-history-router
+          path: build/svelte-guard-history-router
           clean: false
-      - uses: actions/setup-node@v1
-        with:
-          node-version: 14.5.0
-      - run: |
-          cd build/components/svelte-guard-history-router
-          npm install
-          npx rollup -c example/rollup.config.mjs
       - uses: actions/checkout@v2
         with:
           repository: 'arlac77/svelte-common'
-          path: build/components/svelte-common
+          path: build/svelte-common
           clean: false
       - uses: actions/setup-node@v1
         with:
           node-version: 14.5.0
       - run: |
-          cd build/components/svelte-common
-          npm install
-          npx rollup -c example/rollup.config.mjs
+          COMPONENTS="svelte-guard-history-router svelte-common"
+          for c in $COMPONENTS
+          do
+            (cd build/$c;npm install;npx rollup -c example/rollup.config.mjs)
+            mkdir -p build/components/$c
+            cp -R build/$c/example build/components/$c
+            rm -rf build/$c
+          done
       - name: Deploy to GitHub Pages
         if: success()
         uses: crazy-max/ghaction-github-pages@v2
