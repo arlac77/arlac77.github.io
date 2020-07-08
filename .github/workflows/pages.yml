@@ -15,8 +15,8 @@ jobs:
       - run: |
           npm install
           npx rollup -c example/rollup.config.mjs
-          mkdir -p build/components/svelte-guard-history-router
-          cp -R example/public/* build/components/svelte-guard-history-router
+          mkdir -p build/components/svelte-guard-history-router/example
+          cp -R example/public/* build/components/svelte-guard-history-router/example
       -
         name: Deploy to GitHub Pages
         if: success()
