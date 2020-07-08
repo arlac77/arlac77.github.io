@@ -24,7 +24,7 @@ jobs:
           for c in $COMPONENTS
           do
             echo '****** ' $c ' ******'
-            (cd build/$c;npm install;npx rollup -c example/rollup.config.mjs;ls -lR)
+            (cd build/$c;npm install;npx rollup -c example/rollup.config.mjs;ls -lR example)
             mkdir -p build/components/$c/example
             cp -R build/$c/example/public/* build/components/$c/example
             rm -rf build/$c
