@@ -23,7 +23,8 @@ jobs:
           COMPONENTS="svelte-common svelte-guard-history-router"
           for c in $COMPONENTS
           do
-            (cd build/$c;npm install;npx rollup -c example/rollup.config.mjs)
+            echo '****** ' $c ' ******'
+            (cd build/$c;npm install;npx rollup -c example/rollup.config.mjs,ls -lR)
             mkdir -p build/components/$c/example
             cp -R build/$c/example/public/* build/components/$c/example
             rm -rf build/$c
