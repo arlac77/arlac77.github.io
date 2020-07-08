@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 14.5.0
       - run: |
-          COMPONENTS="svelte-guard-history-router svelte-common"
+          COMPONENTS="svelte-common svelte-guard-history-router"
           for c in $COMPONENTS
           do
             (cd build/$c;npm install;npx rollup -c example/rollup.config.mjs)
