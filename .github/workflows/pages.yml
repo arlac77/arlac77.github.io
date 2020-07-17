@@ -28,8 +28,8 @@ jobs:
           clean: false
       - uses: actions/checkout@v2
         with:
-          repository: arlac77/websocket-store
-          path: build/websocket-store
+          repository: arlac77/svelte-websocket-store
+          path: build/svelte-websocket-store
           clean: false
       - uses: actions/setup-node@v1
         with:
