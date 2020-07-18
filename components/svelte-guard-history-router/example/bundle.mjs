@@ -2224,7 +2224,7 @@ function get_each_context_2(ctx, list, i) {
 	return child_ctx;
 }
 
-// (71:6) {#if $router.transition !== undefined}
+// (72:6) {#if $router.transition !== undefined}
 function create_if_block$2(ctx) {
 	let tr;
 	let td0;
@@ -2274,7 +2274,7 @@ function create_if_block$2(ctx) {
 	};
 }
 
-// (85:6) {#each router.routes as r, i (i)}
+// (87:6) {#each router.routes as r, i (i)}
 function create_each_block_2(key_1, ctx) {
 	let tr;
 	let td0;
@@ -2282,7 +2282,7 @@ function create_each_block_2(key_1, ctx) {
 	let t0;
 	let t1;
 	let td1;
-	let t2_value = (/*r*/ ctx[8].guard ? /*r*/ ctx[8].guard : "") + "";
+	let t2_value = /*r*/ ctx[8].guard + "";
 	let t2;
 	let t3;
 	let td2;
@@ -2293,6 +2293,10 @@ function create_each_block_2(key_1, ctx) {
 	let t6_value = /*r*/ ctx[8].component.name + "";
 	let t6;
 	let t7;
+	let td4;
+	let t8_value = /*r*/ ctx[8].subscriptions.size + "";
+	let t8;
+	let t9;
 	let tr_class_value;
 
 	return {
@@ -2312,6 +2316,9 @@ function create_each_block_2(key_1, ctx) {
 			td3 = element("td");
 			t6 = text(t6_value);
 			t7 = space();
+			td4 = element("td");
+			t8 = text(t8_value);
+			t9 = space();
 			attr(td0, "id", "route.path");
 			attr(td0, "class", "svelte-oi8cjc");
 			attr(td1, "id", "route.guard");
@@ -2320,6 +2327,8 @@ function create_each_block_2(key_1, ctx) {
 			attr(td2, "class", "svelte-oi8cjc");
 			attr(td3, "id", "route.component");
 			attr(td3, "class", "svelte-oi8cjc");
+			attr(td4, "id", "route.subscriptions");
+			attr(td4, "class", "svelte-oi8cjc");
 
 			attr(tr, "class", tr_class_value = "" + (null_to_empty(/*r*/ ctx[8] === /*$router*/ ctx[0].route
 			? "current"
@@ -2341,6 +2350,9 @@ function create_each_block_2(key_1, ctx) {
 			append(tr, td3);
 			append(td3, t6);
 			append(tr, t7);
+			append(tr, td4);
+			append(td4, t8);
+			append(tr, t9);
 		},
 		p(ctx, dirty) {
 			if (dirty & /*$router*/ 1 && tr_class_value !== (tr_class_value = "" + (null_to_empty(/*r*/ ctx[8] === /*$router*/ ctx[0].route
@@ -2355,7 +2367,7 @@ function create_each_block_2(key_1, ctx) {
 	};
 }
 
-// (102:6) {#each Object.entries($router.params) as e (e[0])}
+// (104:6) {#each Object.entries($router.params) as e (e[0])}
 function create_each_block_1(key_1, ctx) {
 	let tr;
 	let td0;
@@ -2402,7 +2414,7 @@ function create_each_block_1(key_1, ctx) {
 	};
 }
 
-// (118:6) {#each Object.values($router.keys) as key}
+// (120:6) {#each Object.values($router.keys) as key}
 function create_each_block(ctx) {
 	let tr;
 	let td0;
@@ -2488,26 +2500,26 @@ function create_fragment$5(ctx) {
 	let div;
 	let table0;
 	let thead0;
-	let t1;
+	let t3;
 	let tbody0;
-	let t2;
+	let t4;
 	let table1;
 	let thead1;
-	let t4;
+	let t8;
 	let tbody1;
 	let each_blocks_2 = [];
 	let each0_lookup = new Map();
-	let t5;
+	let t9;
 	let table2;
 	let thead2;
-	let t7;
+	let t11;
 	let tbody2;
 	let each_blocks_1 = [];
 	let each1_lookup = new Map();
-	let t8;
+	let t12;
 	let table3;
 	let thead3;
-	let t14;
+	let t18;
 	let tbody3;
 	let if_block = /*$router*/ ctx[0].transition !== undefined && create_if_block$2(ctx);
 	let each_value_2 = /*router*/ ctx[1].routes;
@@ -2540,33 +2552,39 @@ function create_fragment$5(ctx) {
 			div = element("div");
 			table0 = element("table");
 			thead0 = element("thead");
-			thead0.innerHTML = `<th colspan="2" class="svelte-oi8cjc">Transition</th>`;
-			t1 = space();
+
+			thead0.innerHTML = `<th class="svelte-oi8cjc">Transition</th> 
+      <th class="svelte-oi8cjc">Redirection</th>`;
+
+			t3 = space();
 			tbody0 = element("tbody");
 			if (if_block) if_block.c();
-			t2 = space();
+			t4 = space();
 			table1 = element("table");
 			thead1 = element("thead");
-			thead1.innerHTML = `<th colspan="4" class="svelte-oi8cjc">Routes</th>`;
-			t4 = space();
+
+			thead1.innerHTML = `<th colspan="4" class="svelte-oi8cjc">Routes</th> 
+      <th class="svelte-oi8cjc">Subscriptions</th>`;
+
+			t8 = space();
 			tbody1 = element("tbody");
 
 			for (let i = 0; i < each_blocks_2.length; i += 1) {
 				each_blocks_2[i].c();
 			}
 
-			t5 = space();
+			t9 = space();
 			table2 = element("table");
 			thead2 = element("thead");
 			thead2.innerHTML = `<th colspan="2" class="svelte-oi8cjc">Properties</th>`;
-			t7 = space();
+			t11 = space();
 			tbody2 = element("tbody");
 
 			for (let i = 0; i < each_blocks_1.length; i += 1) {
 				each_blocks_1[i].c();
 			}
 
-			t8 = space();
+			t12 = space();
 			table3 = element("table");
 			thead3 = element("thead");
 
@@ -2574,7 +2592,7 @@ function create_fragment$5(ctx) {
       <th class="svelte-oi8cjc">Value</th> 
       <th class="svelte-oi8cjc">Subscriptions</th>`;
 
-			t14 = space();
+			t18 = space();
 			tbody3 = element("tbody");
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
@@ -2599,33 +2617,33 @@ function create_fragment$5(ctx) {
 			insert(target, div, anchor);
 			append(div, table0);
 			append(table0, thead0);
-			append(table0, t1);
+			append(table0, t3);
 			append(table0, tbody0);
 			if (if_block) if_block.m(tbody0, null);
-			append(div, t2);
+			append(div, t4);
 			append(div, table1);
 			append(table1, thead1);
-			append(table1, t4);
+			append(table1, t8);
 			append(table1, tbody1);
 
 			for (let i = 0; i < each_blocks_2.length; i += 1) {
 				each_blocks_2[i].m(tbody1, null);
 			}
 
-			append(div, t5);
+			append(div, t9);
 			append(div, table2);
 			append(table2, thead2);
-			append(table2, t7);
+			append(table2, t11);
 			append(table2, tbody2);
 
 			for (let i = 0; i < each_blocks_1.length; i += 1) {
 				each_blocks_1[i].m(tbody2, null);
 			}
 
-			append(div, t8);
+			append(div, t12);
 			append(div, table3);
 			append(table3, thead3);
-			append(table3, t14);
+			append(table3, t18);
 			append(table3, tbody3);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
