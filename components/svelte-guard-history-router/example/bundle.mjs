@@ -2294,7 +2294,7 @@ function create_each_block_2(key_1, ctx) {
 	let t6;
 	let t7;
 	let td4;
-	let t8_value = /*r*/ ctx[8].subscriptions + "";
+	let t8_value = /*r*/ ctx[8].subscriptions.size + "";
 	let t8;
 	let t9;
 	let tr_class_value;
