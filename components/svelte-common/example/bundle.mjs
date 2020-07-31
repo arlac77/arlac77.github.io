@@ -718,7 +718,7 @@ function instance($$self, $$props, $$invalidate) {
 	};
 
 	const handleOuterClick = event => {
-		if (event.target === background || event.target === wrap) {
+		if (event.target === background) {
 			event.preventDefault();
 			close();
 		}

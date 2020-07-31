@@ -4,15 +4,23 @@ const articles = Object.fromEntries(
       id: "01",
       name: "Peanutbutter",
       category: "staple",
-      price: 1.98
+      price: 1.98,
+      ingredients: ["peanuts", "water", "salt"]
     },
     {
       id: "02",
       name: "cracked wheat",
       category: "staple",
-      price: 1.29
+      price: 1.29,
+      ingredients: ["wheat"]
     },
-    { id: "03", name: "Milk", category: "staple", price: 1.05 },
+    {
+      id: "03",
+      name: "Milk",
+      category: "staple",
+      price: 1.05,
+      ingredients: ["milk"]
+    },
     { id: "10", name: "Pizza Quattro Stagioni", price: 8.0, category: "pizza" },
     { id: "11", name: "Pizza Salami", price: 7.0, category: "pizza" },
     { id: "12", name: "Pizza Hawaii", price: 7.0, category: "pizza" },
@@ -31,7 +39,8 @@ const articles = Object.fromEntries(
 );
 
 const categories = Object.values(articles).reduce((all, c) => {
-  if (!all[c.category]) all[c.category] = { cid: c.category, name: c.category, articles: [] };
+  if (!all[c.category])
+    all[c.category] = { cid: c.category, name: c.category, articles: [] };
   all[c.category].articles.push(c);
   c.category = all[c.category];
   return all;
@@ -673,16 +682,15 @@ class Transition {
   /**
    * Start the transition
    * - leave old route
-   * - find matching target route @see Router.replace()
+   * - find matching target route @see matcher()
    * - set params
    * - set current route
    * - enter new route
    */
   async start() {
-    const router = this.router;
-
     try {
-      const state = matcher(this.router.routes, this.path);
+      const router = this.router;
+      const state = matcher(router.routes, this.path);
 
       if (state.route) {
         const ancestor = state.route.commonAncestor(this.saved.route);
@@ -693,9 +701,7 @@ class Transition {
 
         router.state = state;
 
-        if (router.route !== undefined) {
-          await router.route.enter(this, ancestor);
-        }
+        await router.route.enter(this, ancestor);
       }
     } catch (e) {
       await this.abort(e);
@@ -756,7 +762,7 @@ class Transition {
 
   /**
    * Bring back the router into the state before the transition has started
-   * @param {Exception} e
+   * @param {Exception|undefined} e
    */
   async abort(e) {
     if (e) {
@@ -1121,15 +1127,7 @@ class Router extends SvelteComponent {
 function link(node, router) {
   node.addEventListener("click", event => {
     event.preventDefault();
-
-    const href = findClosestAttribute(event.target, "href");
-
-    if (href === null) {
-      throw Error("Could not find corresponding href value");
-    }
-
-    router.push(href);
-    return false;
+    router.push(findClosestAttribute(event.target, "href"));
   });
 }
 
@@ -1153,7 +1151,8 @@ const dummyParent = {
   enter: dummyFunction,
   leave: dummyFunction,
   propertiesFor: () => undefined,
-  objectFor: () => undefined
+  objectFor: () => undefined,
+  iteratorFor: () => undefined
 };
 
 function ref(obj, str) {
@@ -1585,12 +1584,12 @@ function create_fragment$1(ctx) {
 function instance$1($$self, $$props, $$invalidate) {
 	let { path } = $$props;
 	let { href = path } = $$props;
+	let { component } = $$props;
 	let { guards } = $$props;
 	let { propertyMapping } = $$props;
 	let { objectInstance } = $$props;
 	let { iteratorFor } = $$props;
 	let { objectFor } = $$props;
-	let { component } = $$props;
 	let { linkComponent } = $$props;
 	let { factory = SkeletonRoute } = $$props;
 	const parent = getContext(ROUTE);
@@ -1644,12 +1643,12 @@ function instance$1($$self, $$props, $$invalidate) {
 	$$self.$set = $$props => {
 		if ("path" in $$props) $$invalidate(3, path = $$props.path);
 		if ("href" in $$props) $$invalidate(0, href = $$props.href);
-		if ("guards" in $$props) $$invalidate(4, guards = $$props.guards);
-		if ("propertyMapping" in $$props) $$invalidate(5, propertyMapping = $$props.propertyMapping);
-		if ("objectInstance" in $$props) $$invalidate(6, objectInstance = $$props.objectInstance);
-		if ("iteratorFor" in $$props) $$invalidate(7, iteratorFor = $$props.iteratorFor);
-		if ("objectFor" in $$props) $$invalidate(8, objectFor = $$props.objectFor);
-		if ("component" in $$props) $$invalidate(9, component = $$props.component);
+		if ("component" in $$props) $$invalidate(4, component = $$props.component);
+		if ("guards" in $$props) $$invalidate(5, guards = $$props.guards);
+		if ("propertyMapping" in $$props) $$invalidate(6, propertyMapping = $$props.propertyMapping);
+		if ("objectInstance" in $$props) $$invalidate(7, objectInstance = $$props.objectInstance);
+		if ("iteratorFor" in $$props) $$invalidate(8, iteratorFor = $$props.iteratorFor);
+		if ("objectFor" in $$props) $$invalidate(9, objectFor = $$props.objectFor);
 		if ("linkComponent" in $$props) $$invalidate(10, linkComponent = $$props.linkComponent);
 		if ("factory" in $$props) $$invalidate(11, factory = $$props.factory);
 		if ("$$scope" in $$props) $$invalidate(12, $$scope = $$props.$$scope);
@@ -1660,12 +1659,12 @@ function instance$1($$self, $$props, $$invalidate) {
 		route,
 		router,
 		path,
+		component,
 		guards,
 		propertyMapping,
 		objectInstance,
 		iteratorFor,
 		objectFor,
-		component,
 		linkComponent,
 		factory,
 		$$scope,
@@ -1680,12 +1679,12 @@ class Route extends SvelteComponent {
 		init(this, options, instance$1, create_fragment$1, safe_not_equal, {
 			path: 3,
 			href: 0,
-			guards: 4,
-			propertyMapping: 5,
-			objectInstance: 6,
-			iteratorFor: 7,
-			objectFor: 8,
-			component: 9,
+			component: 4,
+			guards: 5,
+			propertyMapping: 6,
+			objectInstance: 7,
+			iteratorFor: 8,
+			objectFor: 9,
 			linkComponent: 10,
 			factory: 11
 		});

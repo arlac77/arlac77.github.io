@@ -187,10 +187,6 @@ function schedule_update() {
         resolved_promise.then(flush);
     }
 }
-function tick() {
-    schedule_update();
-    return resolved_promise;
-}
 function add_render_callback(fn) {
     render_callbacks.push(fn);
 }
@@ -550,7 +546,7 @@ async function* lineIterator(reader) {
   let { value, done } = await reader.read();
 
   if(done) { return; }
-  
+ 
   const utf8Decoder = new TextDecoder("utf8");
 
   value = value ? utf8Decoder.decode(value) : "";
@@ -583,53 +579,53 @@ async function* lineIterator(reader) {
 
 function add_css() {
 	var style = element("style");
-	style.id = "svelte-2mbuos-style";
-	style.textContent = "virtual-list-viewport.svelte-2mbuos{position:relative;overflow-y:auto;display:block}virtual-list-contents.svelte-2mbuos,virtual-list-row.svelte-2mbuos{display:block}virtual-list-row.svelte-2mbuos{overflow:hidden}";
+	style.id = "svelte-1g83plk-style";
+	style.textContent = "log-viewport.svelte-1g83plk{position:relative;overflow-y:auto;display:block}log-contents.svelte-1g83plk,log-row.svelte-1g83plk{display:block}log-row.svelte-1g83plk{overflow:hidden}";
 	append(document.head, style);
 }
 
-const get_default_slot_changes = dirty => ({ line: dirty & /*visible*/ 16 });
-const get_default_slot_context = ctx => ({ line: /*line*/ ctx[20] });
+const get_default_slot_changes = dirty => ({ entry: dirty & /*visible*/ 8 });
+const get_default_slot_context = ctx => ({ entry: /*entry*/ ctx[16] });
 
 function get_each_context(ctx, list, i) {
 	const child_ctx = ctx.slice();
-	child_ctx[20] = list[i];
-	child_ctx[22] = i;
+	child_ctx[16] = list[i];
+	child_ctx[18] = i;
 	return child_ctx;
 }
 
-// (107:4) {#each visible as line, i (i)}
+// (94:4) {#each visible as entry, i (i)}
 function create_each_block(key_1, ctx) {
-	let virtual_list_row;
+	let log_row;
 	let t;
 	let current;
-	const default_slot_template = /*$$slots*/ ctx[10].default;
-	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[9], get_default_slot_context);
+	const default_slot_template = /*$$slots*/ ctx[8].default;
+	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[7], get_default_slot_context);
 
 	return {
 		key: key_1,
 		first: null,
 		c() {
-			virtual_list_row = element("virtual-list-row");
+			log_row = element("log-row");
 			if (default_slot) default_slot.c();
 			t = space();
-			set_custom_element_data(virtual_list_row, "class", "svelte-2mbuos");
-			this.first = virtual_list_row;
+			set_custom_element_data(log_row, "class", "svelte-1g83plk");
+			this.first = log_row;
 		},
 		m(target, anchor) {
-			insert(target, virtual_list_row, anchor);
+			insert(target, log_row, anchor);
 
 			if (default_slot) {
-				default_slot.m(virtual_list_row, null);
+				default_slot.m(log_row, null);
 			}
 
-			append(virtual_list_row, t);
+			append(log_row, t);
 			current = true;
 		},
 		p(ctx, dirty) {
 			if (default_slot) {
-				if (default_slot.p && dirty & /*$$scope, visible*/ 528) {
-					update_slot(default_slot, default_slot_template, ctx, /*$$scope*/ ctx[9], dirty, get_default_slot_changes, get_default_slot_context);
+				if (default_slot.p && dirty & /*$$scope, visible*/ 136) {
+					update_slot(default_slot, default_slot_template, ctx, /*$$scope*/ ctx[7], dirty, get_default_slot_changes, get_default_slot_context);
 				}
 			}
 		},
@@ -643,23 +639,23 @@ function create_each_block(key_1, ctx) {
 			current = false;
 		},
 		d(detaching) {
-			if (detaching) detach(virtual_list_row);
+			if (detaching) detach(log_row);
 			if (default_slot) default_slot.d(detaching);
 		}
 	};
 }
 
 function create_fragment(ctx) {
-	let virtual_list_viewport;
-	let virtual_list_contents;
+	let log_viewport;
+	let log_contents;
 	let each_blocks = [];
 	let each_1_lookup = new Map();
-	let virtual_list_viewport_resize_listener;
+	let log_viewport_resize_listener;
 	let current;
 	let mounted;
 	let dispose;
-	let each_value = /*visible*/ ctx[4];
-	const get_key = ctx => /*i*/ ctx[22];
+	let each_value = /*visible*/ ctx[3];
+	const get_key = ctx => /*i*/ ctx[18];
 
 	for (let i = 0; i < each_value.length; i += 1) {
 		let child_ctx = get_each_context(ctx, each_value, i);
@@ -669,50 +665,46 @@ function create_fragment(ctx) {
 
 	return {
 		c() {
-			virtual_list_viewport = element("virtual-list-viewport");
-			virtual_list_contents = element("virtual-list-contents");
+			log_viewport = element("log-viewport");
+			log_contents = element("log-contents");
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].c();
 			}
 
-			set_custom_element_data(virtual_list_contents, "class", "svelte-2mbuos");
-			set_style(virtual_list_viewport, "height", /*height*/ ctx[0]);
-			set_custom_element_data(virtual_list_viewport, "class", "svelte-2mbuos");
-			add_render_callback(() => /*virtual_list_viewport_elementresize_handler*/ ctx[13].call(virtual_list_viewport));
+			set_custom_element_data(log_contents, "class", "svelte-1g83plk");
+			set_style(log_viewport, "height", height);
+			set_custom_element_data(log_viewport, "class", "svelte-1g83plk");
+			add_render_callback(() => /*log_viewport_elementresize_handler*/ ctx[11].call(log_viewport));
 		},
 		m(target, anchor) {
-			insert(target, virtual_list_viewport, anchor);
-			append(virtual_list_viewport, virtual_list_contents);
+			insert(target, log_viewport, anchor);
+			append(log_viewport, log_contents);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
-				each_blocks[i].m(virtual_list_contents, null);
+				each_blocks[i].m(log_contents, null);
 			}
 
-			/*virtual_list_contents_binding*/ ctx[11](virtual_list_contents);
-			/*virtual_list_viewport_binding*/ ctx[12](virtual_list_viewport);
-			virtual_list_viewport_resize_listener = add_resize_listener(virtual_list_viewport, /*virtual_list_viewport_elementresize_handler*/ ctx[13].bind(virtual_list_viewport));
+			/*log_contents_binding*/ ctx[9](log_contents);
+			/*log_viewport_binding*/ ctx[10](log_viewport);
+			log_viewport_resize_listener = add_resize_listener(log_viewport, /*log_viewport_elementresize_handler*/ ctx[11].bind(log_viewport));
 			current = true;
 
 			if (!mounted) {
 				dispose = [
-					listen(window, "keydown", /*handleKeydown*/ ctx[6]),
-					listen(virtual_list_viewport, "scroll", /*handleScroll*/ ctx[5])
+					listen(window, "keydown", /*handleKeydown*/ ctx[5]),
+					listen(log_viewport, "scroll", /*handleScroll*/ ctx[4])
 				];
 
 				mounted = true;
 			}
 		},
 		p(ctx, [dirty]) {
-			if (dirty & /*$$scope, visible*/ 528) {
-				const each_value = /*visible*/ ctx[4];
+			if (dirty & /*$$scope, visible*/ 136) {
+				const each_value = /*visible*/ ctx[3];
 				group_outros();
-				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, virtual_list_contents, outro_and_destroy_block, create_each_block, null, get_each_context);
+				each_blocks = update_keyed_each(each_blocks, dirty, get_key, 1, ctx, each_value, each_1_lookup, log_contents, outro_and_destroy_block, create_each_block, null, get_each_context);
 				check_outros();
-			}
-
-			if (!current || dirty & /*height*/ 1) {
-				set_style(virtual_list_viewport, "height", /*height*/ ctx[0]);
 			}
 		},
 		i(local) {
@@ -732,129 +724,112 @@ function create_fragment(ctx) {
 			current = false;
 		},
 		d(detaching) {
-			if (detaching) detach(virtual_list_viewport);
+			if (detaching) detach(log_viewport);
 
 			for (let i = 0; i < each_blocks.length; i += 1) {
 				each_blocks[i].d();
 			}
 
-			/*virtual_list_contents_binding*/ ctx[11](null);
-			/*virtual_list_viewport_binding*/ ctx[12](null);
-			virtual_list_viewport_resize_listener();
+			/*log_contents_binding*/ ctx[9](null);
+			/*log_viewport_binding*/ ctx[10](null);
+			log_viewport_resize_listener();
 			mounted = false;
 			run_all(dispose);
 		}
 	};
 }
 
+const height = "100%";
+
 function instance($$self, $$props, $$invalidate) {
 	let { source } = $$props;
-	let { height = "100%" } = $$props;
-	let { lineHeight = 10 } = $$props;
-	let start = 0;
-	let end = 0;
 	let viewport;
 	let contents;
 	let rows;
 	let viewportHeight = 0;
-	let mounted;
-	let lines = [];
-	let visible = lines;
+	let start = 0;
+	const entries = [];
+	let visible = entries;
 
 	onMount(async () => {
-		$$invalidate(17, mounted = true);
-		rows = contents.getElementsByTagName("virtual-list-row");
+		rows = contents.getElementsByTagName("log-row");
 
-		for await (const line of source) {
-			lines.push(line);
-			$$invalidate(4, visible = lines);
-		}
+		for await (const entry of source) {
+			entries.push(entry);
+			$$invalidate(3, visible = entries);
+		} //console.log("onMount", start, entries.length, rows.length);
 	});
 
-	async function refresh(items, first) {
+	async function refresh() {
 		const { scrollTop } = viewport;
-		await tick();
-		console.log("refresh", start, end, items.length, rows.length);
-		let contentHeight = 0 - scrollTop;
-
-		for (end = start; end < rows.length && contentHeight < viewportHeight; (end++, contentHeight += lineHeight)) {
-			let row = rows[end - start];
-
-			if (!row) {
-				await tick();
-				line = rows[end - start];
-				console.log(lineHeight, end);
-			}
-		}
+		console.log("refresh", scrollTop, start, entries.length, rows.length);
 	}
 
 	async function handleScroll() {
 		const { scrollTop } = viewport;
-		console.log("handleScroll", scrollTop);
+		console.log("handleScroll", scrollTop, start, entries.length, rows.length);
 	}
 
 	function handleKeydown(event) {
-		//console.log(event.keyCode);
 		switch (event.keyCode) {
 			case 8:
 			case 37:
 			case 75:
-				// entriesLoadPrevious();
+				if (start > 0) {
+					start--;
+					$$invalidate(3, visible = entries.slice(start, start + rows.length));
+					refresh();
+				}
 				break;
 			case 32:
 			case 39:
 			case 74:
-				//  entriesLoadNext();
+				start++;
+				$$invalidate(3, visible = entries.slice(start, start + rows.length));
+				refresh();
 				break;
 			case 71:
-				// 'G' show last lines
-				start = lines.length - 10;
-				refresh(lines);
+				// 'G' show last entries
+				start = entries.length - rows.length;
+				$$invalidate(3, visible = entries.slice(start));
+				refresh();
 				break;
 			case 103:
-				// 'g' show first lines
+				// 'g' show first entries
 				start = 0;
-				refresh(lines);
+				$$invalidate(3, visible = entries.slice(start, rows.length));
+				refresh();
 				break;
 		}
 	}
 
 	let { $$slots = {}, $$scope } = $$props;
 
-	function virtual_list_contents_binding($$value) {
+	function log_contents_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
 			contents = $$value;
-			$$invalidate(2, contents);
+			$$invalidate(1, contents);
 		});
 	}
 
-	function virtual_list_viewport_binding($$value) {
+	function log_viewport_binding($$value) {
 		binding_callbacks[$$value ? "unshift" : "push"](() => {
 			viewport = $$value;
-			$$invalidate(1, viewport);
+			$$invalidate(0, viewport);
 		});
 	}
 
-	function virtual_list_viewport_elementresize_handler() {
+	function log_viewport_elementresize_handler() {
 		viewportHeight = this.offsetHeight;
-		$$invalidate(3, viewportHeight);
+		$$invalidate(2, viewportHeight);
 	}
 
 	$$self.$set = $$props => {
-		if ("source" in $$props) $$invalidate(7, source = $$props.source);
-		if ("height" in $$props) $$invalidate(0, height = $$props.height);
-		if ("lineHeight" in $$props) $$invalidate(8, lineHeight = $$props.lineHeight);
-		if ("$$scope" in $$props) $$invalidate(9, $$scope = $$props.$$scope);
-	};
-
-	$$self.$$.update = () => {
-		if ($$self.$$.dirty & /*mounted*/ 131072) {
-			 if (mounted) refresh(lines);
-		}
+		if ("source" in $$props) $$invalidate(6, source = $$props.source);
+		if ("$$scope" in $$props) $$invalidate(7, $$scope = $$props.$$scope);
 	};
 
 	return [
-		height,
 		viewport,
 		contents,
 		viewportHeight,
@@ -862,20 +837,19 @@ function instance($$self, $$props, $$invalidate) {
 		handleScroll,
 		handleKeydown,
 		source,
-		lineHeight,
 		$$scope,
 		$$slots,
-		virtual_list_contents_binding,
-		virtual_list_viewport_binding,
-		virtual_list_viewport_elementresize_handler
+		log_contents_binding,
+		log_viewport_binding,
+		log_viewport_elementresize_handler
 	];
 }
 
 class LogView extends SvelteComponent {
 	constructor(options) {
 		super();
-		if (!document.getElementById("svelte-2mbuos-style")) add_css();
-		init(this, options, instance, create_fragment, safe_not_equal, { source: 7, height: 0, lineHeight: 8 });
+		if (!document.getElementById("svelte-1g83plk-style")) add_css();
+		init(this, options, instance, create_fragment, safe_not_equal, { source: 6 });
 	}
 }
 
@@ -924,8 +898,8 @@ function create_then_block(ctx) {
 				$$slots: {
 					default: [
 						create_default_slot,
-						({ line }) => ({ 2: line }),
-						({ line }) => line ? 4 : 0
+						({ entry }) => ({ 2: entry }),
+						({ entry }) => entry ? 4 : 0
 					]
 				},
 				$$scope: { ctx }
@@ -943,7 +917,7 @@ function create_then_block(ctx) {
 		p(ctx, dirty) {
 			const logview_changes = {};
 
-			if (dirty & /*$$scope, line*/ 20) {
+			if (dirty & /*$$scope, entry*/ 20) {
 				logview_changes.$$scope = { dirty, ctx };
 			}
 
@@ -964,9 +938,9 @@ function create_then_block(ctx) {
 	};
 }
 
-// (22:4) <LogView {source} let:line>
+// (22:4) <LogView {source} let:entry>
 function create_default_slot(ctx) {
-	let t_value = /*line*/ ctx[2] + "";
+	let t_value = /*entry*/ ctx[2] + "";
 	let t;
 
 	return {
@@ -977,7 +951,7 @@ function create_default_slot(ctx) {
 			insert(target, t, anchor);
 		},
 		p(ctx, dirty) {
-			if (dirty & /*line*/ 4 && t_value !== (t_value = /*line*/ ctx[2] + "")) set_data(t, t_value);
+			if (dirty & /*entry*/ 4 && t_value !== (t_value = /*entry*/ ctx[2] + "")) set_data(t, t_value);
 		},
 		d(detaching) {
 			if (detaching) detach(t);
