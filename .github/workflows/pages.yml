@@ -8,6 +8,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
+          repository: arlac77/svelte-repository-provider
+          path: build/svelte-repository-provider
+          clean: false
+      - uses: actions/checkout@v2
+        with:
           repository: arlac77/svelte-log-view
           path: build/svelte-log-view
           clean: false
@@ -35,7 +40,7 @@ jobs:
         with:
           node-version: 14.5.0
       - run: |
-          COMPONENTS="svelte-websocket-store svelte-log-view svelte-session-manager svelte-common svelte-guard-history-router"
+          COMPONENTS="svelte-repository-provider svelte-websocket-store svelte-log-view svelte-session-manager svelte-common svelte-guard-history-router"
           for c in $COMPONENTS
           do
             echo '****** ' $c ' ******'
