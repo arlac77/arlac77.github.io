@@ -38,15 +38,15 @@ jobs:
           clean: false
       - uses: actions/setup-node@v1
         with:
-          node-version: 14.5.0
+          node-version: 14.11.0
       - run: |
           COMPONENTS="svelte-repository-provider svelte-websocket-store svelte-log-view svelte-session-manager svelte-common svelte-guard-history-router"
           for c in $COMPONENTS
           do
             echo '****** ' $c ' ******'
-            (cd build/$c;npm install;npx rollup -c example/rollup.config.mjs;ls -lR example)
-            mkdir -p build/components/$c/example
-            cp -R build/$c/example/public/* build/components/$c/example
+            (cd build/$c;npm install;npx rollup -c tests/app/rollup.config.mjs)
+            mkdir -p build/components/$c/tests/app
+            cp -R build/$c/tests/app/public/* build/components/$c/tests/app
             rm -rf build/$c
           done
       - name: Deploy to GitHub Pages
