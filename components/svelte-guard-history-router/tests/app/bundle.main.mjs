@@ -21,20 +21,20 @@ const articles = Object.fromEntries(
       price: 1.05,
       ingredients: ["milk"]
     },
-    { id: "10", name: "Pizza Quattro Stagioni", price: 8.0, category: "pizza" },
-    { id: "11", name: "Pizza Salami", price: 7.0, category: "pizza" },
-    { id: "12", name: "Pizza Hawaii", price: 7.0, category: "pizza" },
-    { id: "13", name: "Pizza Margherita", price: 5.0, category: "pizza" },
-    { id: "14", name: "Pizza Funghi", price: 7.0, category: "pizza" },
-    { id: "15", name: "Pizza Calzone", price: 7.0, category: "pizza" },
-    { id: "16", name: "Pizza Tonno", price: 7.0, category: "pizza" },
-    { id: "17", name: "Pizza Frutti di Mare", price: 7.0, category: "pizza" },
-    { id: "18", name: "Pizza Prosciutto", price: 7.0, category: "pizza" },
-    { id: "19", name: "Pizza Peperoni", price: 7.0, category: "pizza" },
-    { id: "20", name: "Pizza Chef", price: 7.5, category: "pizza" },
-    { id: "21", name: "Pizza Speciale", price: 8.5, category: "pizza" },
-    { id: "23", name: "Hot Dog", price: 2.0, category: "to go" },
-    { id: "32", name: "Cheesecake", price: 2.0, category: "dessert" }
+    { id: 10, name: "Pizza Quattro Stagioni", price: 8.0, category: "pizza" },
+    { id: 11, name: "Pizza Salami", price: 7.0, category: "pizza" },
+    { id: 12, name: "Pizza Hawaii", price: 7.0, category: "pizza" },
+    { id: 13, name: "Pizza Margherita", price: 5.0, category: "pizza" },
+    { id: 14, name: "Pizza Funghi", price: 7.0, category: "pizza" },
+    { id: 15, name: "Pizza Calzone", price: 7.0, category: "pizza" },
+    { id: 16, name: "Pizza Tonno", price: 7.0, category: "pizza" },
+    { id: 17, name: "Pizza Frutti di Mare", price: 7.0, category: "pizza" },
+    { id: 18, name: "Pizza Prosciutto", price: 7.0, category: "pizza" },
+    { id: 19, name: "Pizza Peperoni", price: 7.0, category: "pizza" },
+    { id: 20, name: "Pizza Chef", price: 7.5, category: "pizza" },
+    { id: 21, name: "Pizza Speciale", price: 8.5, category: "pizza" },
+    { id: 23, name: "Hot Dog", price: 2.0, category: "to go" },
+    { id: 32, name: "Cheesecake", price: 2.0, category: "dessert" }
   ].map(a => [a.id, a])
 );
 
@@ -186,7 +186,7 @@ function set_current_component(component) {
 }
 function get_current_component() {
     if (!current_component)
-        throw new Error(`Function called outside component initialization`);
+        throw new Error('Function called outside component initialization');
     return current_component;
 }
 function onMount(fn) {
@@ -502,7 +502,7 @@ class SvelteComponent {
 }
 
 function findClosestAttribute(element, attributeName) {
-    let attribute;
+  let attribute;
   while ((attribute = element.getAttribute(attributeName)) === null) {
     element = element.parentElement;
     if (element === null) {
@@ -554,6 +554,7 @@ function nameValueStore(name, initialValue) {
 
 const ROUTE = "@private-ROUTE";
 const ROUTER = "@private-ROUTER";
+const NAVIGATION_EVENT = "routeLink";
 
 /**
  * Result of the routes compilation
@@ -825,11 +826,7 @@ class Transition {
  * @property {string} base url
  */
 class BaseRouter {
-  static get navigationEventType() {
-    return "routerLink";
-  }
-
-  constructor(routes = [], base = "") {
+  constructor(routes, base) {
     let route;
 
     this.routes = routes;
@@ -873,7 +870,16 @@ class BaseRouter {
         }
       }
     });
+
     this.compile();
+
+    window.addEventListener(NAVIGATION_EVENT, event =>
+      this.push(event.detail.path)
+    );
+
+    window.addEventListener("popstate", event =>
+      this.replace(window.location.pathname.slice(this.base.length))
+    );
   }
 
   compile() {
@@ -881,24 +887,11 @@ class BaseRouter {
 
     for (const route of this.routes) {
       route.keys.forEach(key => {
-        if (this.keys[key]) {
-          return;
+        if (!this.keys[key]) {
+          this.keys[key] = nameValueStore(key);
         }
-        this.keys[key] = nameValueStore(key);
       });
     }
-  }
-
-  start() {
-    window.addEventListener(BaseRouter.navigationEventType, event =>
-      this.push(event.detail.path)
-    );
-
-    window.addEventListener("popstate", event =>
-      this.replace(window.location.pathname.slice(this.base.length))
-    );
-
-    this.push(window.location.pathname.slice(this.base.length));
   }
 
   /**
@@ -952,7 +945,7 @@ class BaseRouter {
   }
 
   /**
-   * Leave current route and enter route for given path
+   * Leave current route and enter route for given path.
    * The work is done by a Transition
    * @param {string} path where to go
    * @return {Transition} running transition
@@ -968,49 +961,53 @@ class BaseRouter {
    * @param {string} path
    */
   finalizePush(path) {
-    const c = this.component;
     this.transition = undefined;
 
-    // transition had its own tmp component (waiting... or so)
-    if (c !== this.component) {
-      this.notifySubscriptions();
+    if (path !== undefined) {
+      history.pushState(undefined, undefined, this.base + path);
     }
 
-    if (path !== undefined) {
-      history.pushState(
-        undefined,
-        undefined,
-        this.base + path
-      );
-    }
+    this.notifySubscriptions();
 
     this.linkNodes.forEach(n => this.updateActive(n));
   }
 
   /**
    * Continue a transition to its original destination.
-   * Shortcut for this.transition.continue()
-   * Does nothing if there is no transition.
+   * Shortcut for this.transition.continue().
+   * If there is no transition ongoing and a fallbackPath is
+   * present it will be entered.
+   * Otherwise does nothing.
+   * @param {string} fallbackPath
    */
-  async continue() {
+  async continue(fallbackPath) {
     if (this.transition) {
       return this.transition.continue();
+    }
+    if (fallbackPath) {
+      return this.push(fallbackPath);
     }
   }
 
   /**
    * Abort a transition.
    * Shortcut for this.transition.abort()
-   * Does nothing if there is no transition.
+   * If there is no transition ongoing and a fallbackPath is
+   * present it will be entered.
+   * Otherwise does nothing.
+   * @param {string} fallbackPath
    */
-  async abort() {
+  async abort(fallbackPath) {
     if (this.transition) {
       return this.transition.abort();
+    }
+    if (fallbackPath) {
+      return this.push(fallbackPath);
     }
   }
 
   /**
-   * Router subscription
+   * Router subscription.
    * Changes in the current route will trigger a update
    * @param {Function} subscription
    */
@@ -1039,7 +1036,7 @@ class BaseRouter {
   }
 
   /**
-   * Add a new route.
+   * Add a new Route.
    * @param {Route} route
    */
   addRoute(route) {
@@ -1066,7 +1063,7 @@ class BaseRouter {
   }
 }
 
-/* src/components/Router.svelte generated by Svelte v3.26.0 */
+/* src/components/Router.svelte generated by Svelte v3.29.4 */
 
 function create_fragment(ctx) {
 	let current;
@@ -1108,7 +1105,7 @@ function create_fragment(ctx) {
 
 function instance($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
-	let { router } = $$props;
+	let { router = undefined } = $$props;
 	let { routes = [] } = $$props;
 	let { base = "" } = $$props;
 
@@ -1117,7 +1114,7 @@ function instance($$self, $$props, $$invalidate) {
 	}
 
 	setContext(ROUTER, router);
-	onMount(() => router.start());
+	onMount(() => router.push(window.location.pathname.slice(base.length)));
 
 	$$self.$$set = $$props => {
 		if ("router" in $$props) $$invalidate(0, router = $$props.router);
@@ -1152,217 +1149,6 @@ function active(node, router) {
       router.linkNodes.delete(node);
     }
   };
-}
-
-const dummyFunction = () => {}; 
-const dummySet = { size: 0, forEach: dummyFunction };
-const dummyGuard = { toString: () => "", enter: dummyFunction, leave: dummyFunction };
-const dummyParent = {
-  path: "",
-  guard: dummyGuard,
-  enter: dummyFunction,
-  leave: dummyFunction,
-  propertiesFor: () => undefined,
-  objectFor: () => undefined,
-  iteratorFor: () => undefined
-};
-
-function ref(obj, str) {
-  for (const part of str.split(".")) {
-    obj = obj[part];
-  }
-  return obj;
-}
-
-/**
- * Route
- * @property {string} _path
- * @property {SvelteComponent} component target to show
- * @property {SvelteComponent} linkComponent content for {@link ObjectLink}
- * @property {number} priority
- * @property {string[]} keys as found in the path
- * @property {RegEx} regex
- * @property {any} value
- */
-class SkeletonRoute {
-  /**
-   * Full path of the Route including all parents
-   * @return {string} path
-   */
-  get path() {
-    return this.parent.path + this._path;
-  }
-
-  /**
-   * Enter the route from a former one.
-   * @param {Transition} transition
-   * @param {Route} untilRoute the common ancestor with the former route 
-   */
-  async enter(transition, untilRoute) {
-    if (this !== untilRoute) {
-      await this.parent.enter(transition, untilRoute);
-      return this.guard.enter(transition);
-    }
-  }
-
-  /**
-   * Leave the route to a new one.
-   * @param {Transition} transition
-   * @param {Route} untilRoute the common ancestor with the next route 
-   */
-  async leave(transition, untilRoute) {
-    if (this !== untilRoute) {
-      await this.guard.leave(transition);
-      return this.parent.leave(transition, untilRoute);
-    }
-  }
-
-  matches(object, properties) {
-    for (const [p, n] of Object.entries(this.propertyMapping)) {
-      if (ref(object, n) !== properties[p]) {
-        return false;
-      }
-    }
-
-    return object instanceof this.objectInstance;
-  }
-
-  /**
-   * Extract properties from object.
-   * @param {Object} object
-   * @return {Object|undefined} properties extracted from given objects
-   */
-  propertiesFor(object) {
-    let properties = this.parent.propertiesFor(object);
-
-    if (object instanceof this.objectInstance) {
-      for (const [p, n] of Object.entries(this.propertyMapping)) {
-        const v = ref(object, n);
-        if (v === undefined) {
-          return undefined;
-        }
-        if (properties === undefined) {
-          properties = {};
-        }
-        properties[p] = v;
-      }
-    }
-
-    return properties;
-  }
-
-  /**
-   * Find common ancestor with another Route
-   * @param {Route} other 
-   * @return {Route|undefined} common ancestor Route between receiver and other 
-   */ 
-  commonAncestor(other) {
-    for (let o = other; o; o = o.parent) {
-      for (let p = this; p; p = p.parent) {
-        if (p === o) {
-          return p;
-        }
-      }
-    }
-  }
-
-  get subscriptions() {
-    return this._subscriptions || dummySet;
-  }
-
-  get parent() {
-    return this._parent || dummyParent;
-  }
-
-  get guard() {
-    return this._guard || dummyGuard;
-  }
-
-  /**
-   * Map properties to objects attributes.
-   * Keys are the property names and values are the keys in the resulting object.
-   * @return {Object}
-   */
-  get propertyMapping() {
-    return this._propertyMapping || {};
-  }
-
-  get objectInstance() {
-    return this._objectInstance || Object;
-  }
-
-  subscribe(subscription) {
-    if (this.subscriptions === dummySet) {
-      this._subscriptions = new Set();
-    }
-    this.subscriptions.add(subscription);
-    subscription(this.value);
-    return () => this.subscriptions.delete(subscription);
-  }
-
-  /**
-   * Deliver object for a given set of properties
-   * @param {Object} properties
-   * @return {Object} for matching properties
-   */
-  objectFor(transition, properties) {
-    return this.parent.objectFor(transition, properties);
-  }
-
-  iteratorFor(transition, properties) {
-    return this.parent.iteratorFor(transition, properties);
-  }
-
-  set value(v) {
-    this.subscriptions.forEach(subscription => subscription(v));
-    this._value = v;
-  }
-
-  get value() {
-    return this._value;
-  }
-}
-
-class IteratorStoreRoute extends SkeletonRoute {
-  constructor() {
-    super();
-    this.value = [];
-  }
-
-  async enter(transition, untilRoute) {
-    await super.enter(transition, untilRoute);
-
-    const entries = [];
-    this.value = entries;
-
-    const properties = transition.router.params;
-
-    for await (const e of await this.iteratorFor(transition, properties)) {
-      entries.push(e);
-    }
-
-    this.value = entries;
-  }
-}
-
-class ObjectStoreRoute extends SkeletonRoute {
-  async enter(transition, untilRoute) {
-    await super.enter(transition, untilRoute);
-    this.value = await this.objectFor(transition, transition.router.params);
-  }
-}
-
-class ChildStoreRoute extends ObjectStoreRoute {
-  async objectFor(transition, properties) {
-    for await (const object of this.parent.iteratorFor(
-      transition,
-      properties
-    )) {
-      if (this.matches(object, properties)) {
-        return object;
-      }
-    }
-  }
 }
 
 /**
@@ -1425,48 +1211,263 @@ function sequenceGuard(children) {
   };
 }
 
-/* src/components/Route.svelte generated by Svelte v3.26.0 */
+const dummyFunction = () => {};
+const dummySet = { size: 0, forEach: dummyFunction };
 
-function create_else_block(ctx) {
-	let current;
-	const default_slot_template = /*#slots*/ ctx[13].default;
-	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[12], null);
-
-	return {
-		c() {
-			if (default_slot) default_slot.c();
-		},
-		m(target, anchor) {
-			if (default_slot) {
-				default_slot.m(target, anchor);
-			}
-
-			current = true;
-		},
-		p(ctx, dirty) {
-			if (default_slot) {
-				if (default_slot.p && dirty & /*$$scope*/ 4096) {
-					update_slot(default_slot, default_slot_template, ctx, /*$$scope*/ ctx[12], dirty, null, null);
-				}
-			}
-		},
-		i(local) {
-			if (current) return;
-			transition_in(default_slot, local);
-			current = true;
-		},
-		o(local) {
-			transition_out(default_slot, local);
-			current = false;
-		},
-		d(detaching) {
-			if (default_slot) default_slot.d(detaching);
-		}
-	};
+function ref(obj, str) {
+  for (const part of str.split(".")) {
+    obj = obj[part];
+  }
+  if (obj !== undefined) {
+    return obj.toString();
+  }
 }
 
-// (66:0) {#if route.keys.length === 0}
-function create_if_block(ctx) {
+class RootRoute {
+  /**
+   * Are there parameters in the path.
+   * @return {boolean} true if route has parameters (:key)
+   */
+  get hasParams() {
+    return this.keys.length > 0;
+  }
+
+  get path() {
+    return "";
+  }
+
+  get objectInstance() {
+    return Object;
+  }
+
+  get propertyMapping() {
+    return {};
+  }
+
+  get guard() {
+    return {
+      toString: () => "",
+      enter: dummyFunction,
+      leave: dummyFunction
+    };
+  }
+
+  enter() {}
+  leave() {}
+  propertiesFor() {}
+  objectFor() {}
+  async *iteratorFor() {}
+}
+
+const rootRoute = new RootRoute();
+
+/**
+ * Route
+ * @property {string} path full path of the Route including all parents
+ * @property {SvelteComponent} component target to show
+ * @property {SvelteComponent} linkComponent content for {@link ObjectLink}
+ * @property {Object} propertyMapping Map properties to object attributes
+ *           Keys are the property names and values are the keys in the resulting object.
+ * @property {number} priority
+ * @property {string[]} keys as found in the path
+ * @property {RegEx} regex
+ * @property {any} value
+ */
+class SkeletonRoute extends RootRoute {
+  constructor(path, options = {}) {
+    super();
+
+    if (Array.isArray(options.guard)) {
+      switch (options.guard.length) {
+        case 0:
+          delete options.guard;
+          break;
+        case 1:
+          options.guard = options.guard[0];
+          break;
+        default:
+          options.guard = sequenceGuard(options.guard);
+      }
+    }
+
+    let value;
+
+    Object.defineProperties(this, {
+      parent: { value: rootRoute },
+      path: { get: () => this.parent.path + path },
+      value: {
+        set: v => {
+          value = v;
+          this.subscriptions.forEach(subscription => subscription(v));
+        },
+        get: () => value
+      },
+      ...Object.fromEntries(
+        Object.entries(options)
+          .filter(([k, v]) => v !== undefined)
+          .map(([k, v]) => [k, { value: v }])
+      )
+    });
+
+    this.subscriptions = dummySet;
+  }
+
+  /**
+   * Enter the route from a former one.
+   * @param {Transition} transition
+   * @param {Route} untilRoute the common ancestor with the former route
+   */
+  async enter(transition, untilRoute) {
+    if (this !== untilRoute) {
+      await this.parent.enter(transition, untilRoute);
+      return this.guard.enter(transition);
+    }
+  }
+
+  /**
+   * Leave the route to a new one.
+   * @param {Transition} transition
+   * @param {Route} untilRoute the common ancestor with the next route
+   */
+  async leave(transition, untilRoute) {
+    if (this !== untilRoute) {
+      await this.guard.leave(transition);
+      return this.parent.leave(transition, untilRoute);
+    }
+  }
+
+  /**
+   * Check is properties against object.
+   * @param {Object} object
+   * @param {Object} properties
+   * @return {boolean} true if object properties are matching with the given proerties
+   */
+  matches(object, properties) {
+    for (const [p, n] of Object.entries(this.propertyMapping)) {
+      if (ref(object, n) !== properties[p]) {
+        return false;
+      }
+    }
+
+    return object instanceof this.objectInstance;
+  }
+
+  /**
+   * Extract properties from object.
+   * All property values are strings.
+   * @param {Object} object
+   * @return {Object|undefined} properties extracted from given objects
+   */
+  propertiesFor(object) {
+    let properties = this.parent.propertiesFor(object);
+
+    if (object instanceof this.objectInstance) {
+      for (const [p, n] of Object.entries(this.propertyMapping)) {
+        const v = ref(object, n);
+        if (v === undefined) {
+          return undefined;
+        }
+        if (properties === undefined) {
+          properties = {};
+        }
+        properties[p] = v.toString();
+      }
+    }
+
+    return properties;
+  }
+
+  /**
+   * Find common ancestor with another Route.
+   * @param {Route} other
+   * @return {Route|undefined} common ancestor Route between receiver and other
+   */
+  commonAncestor(other) {
+    for (let o = other; o; o = o.parent) {
+      for (let p = this; p; p = p.parent) {
+        if (p === o) {
+          return p;
+        }
+      }
+    }
+  }
+
+  subscribe(subscription) {
+    if (this.subscriptions === dummySet) {
+      this.subscriptions = new Set();
+    }
+    this.subscriptions.add(subscription);
+    subscription(this.value);
+    return () => this.subscriptions.delete(subscription);
+  }
+
+  /**
+   * Deliver object for a given set of properties
+   * @param {Object} properties
+   * @return {Object} for matching properties
+   */
+  objectFor(transition, properties) {
+    return this.parent.objectFor(transition, properties);
+  }
+
+  async *iteratorFor(transition, properties) {
+    yield* this.parent.iteratorFor(transition, properties);
+  }
+
+  get propertyMapping() {
+    return this.parent.propertyMapping;
+  }
+
+  get objectInstance() {
+    return this.parent.objectInstance;
+  }
+}
+
+class IteratorStoreRoute extends SkeletonRoute {
+  constructor(path, options) {
+    super(path, options);
+    this.value = [];
+  }
+
+  async enter(transition, untilRoute) {
+    await super.enter(transition, untilRoute);
+
+    const entries = [];
+    this.value = entries;
+
+    const properties = transition.router.params;
+
+    for await (const e of await this.iteratorFor(transition, properties)) {
+      entries.push(e);
+    }
+
+    this.value = entries;
+  }
+}
+
+class ObjectStoreRoute extends SkeletonRoute {
+  async enter(transition, untilRoute) {
+    await super.enter(transition, untilRoute);
+    this.value = await this.objectFor(transition, transition.router.params);
+  }
+}
+
+class ChildStoreRoute extends ObjectStoreRoute {
+  async objectFor(transition, properties) {
+    for await (const object of this.parent.iteratorFor(
+      transition,
+      properties
+    )) {
+      if (this.matches(object, properties)) {
+        return object;
+      }
+    }
+  }
+}
+
+/* src/components/Route.svelte generated by Svelte v3.29.4 */
+
+function create_else_block(ctx) {
 	let a;
 	let link_action;
 	let active_action;
@@ -1529,6 +1530,45 @@ function create_if_block(ctx) {
 	};
 }
 
+// (37:0) {#if route.hasParams}
+function create_if_block(ctx) {
+	let current;
+	const default_slot_template = /*#slots*/ ctx[13].default;
+	const default_slot = create_slot(default_slot_template, ctx, /*$$scope*/ ctx[12], null);
+
+	return {
+		c() {
+			if (default_slot) default_slot.c();
+		},
+		m(target, anchor) {
+			if (default_slot) {
+				default_slot.m(target, anchor);
+			}
+
+			current = true;
+		},
+		p(ctx, dirty) {
+			if (default_slot) {
+				if (default_slot.p && dirty & /*$$scope*/ 4096) {
+					update_slot(default_slot, default_slot_template, ctx, /*$$scope*/ ctx[12], dirty, null, null);
+				}
+			}
+		},
+		i(local) {
+			if (current) return;
+			transition_in(default_slot, local);
+			current = true;
+		},
+		o(local) {
+			transition_out(default_slot, local);
+			current = false;
+		},
+		d(detaching) {
+			if (default_slot) default_slot.d(detaching);
+		}
+	};
+}
+
 function create_fragment$1(ctx) {
 	let current_block_type_index;
 	let if_block;
@@ -1538,7 +1578,7 @@ function create_fragment$1(ctx) {
 	const if_blocks = [];
 
 	function select_block_type(ctx, dirty) {
-		if (/*route*/ ctx[1].keys.length === 0) return 0;
+		if (/*route*/ ctx[1].hasParams) return 0;
 		return 1;
 	}
 
@@ -1556,29 +1596,7 @@ function create_fragment$1(ctx) {
 			current = true;
 		},
 		p(ctx, [dirty]) {
-			let previous_block_index = current_block_type_index;
-			current_block_type_index = select_block_type(ctx);
-
-			if (current_block_type_index === previous_block_index) {
-				if_blocks[current_block_type_index].p(ctx, dirty);
-			} else {
-				group_outros();
-
-				transition_out(if_blocks[previous_block_index], 1, 1, () => {
-					if_blocks[previous_block_index] = null;
-				});
-
-				check_outros();
-				if_block = if_blocks[current_block_type_index];
-
-				if (!if_block) {
-					if_block = if_blocks[current_block_type_index] = if_block_creators[current_block_type_index](ctx);
-					if_block.c();
-				}
-
-				transition_in(if_block, 1);
-				if_block.m(if_block_anchor.parentNode, if_block_anchor);
-			}
+			if_block.p(ctx, dirty);
 		},
 		i(local) {
 			if (current) return;
@@ -1600,72 +1618,42 @@ function instance$1($$self, $$props, $$invalidate) {
 	let { $$slots: slots = {}, $$scope } = $$props;
 	let { path } = $$props;
 	let { href = path } = $$props;
-	let { component } = $$props;
-	let { guards } = $$props;
-	let { propertyMapping } = $$props;
-	let { objectInstance } = $$props;
-	let { iteratorFor } = $$props;
-	let { objectFor } = $$props;
-	let { linkComponent } = $$props;
 	let { factory = SkeletonRoute } = $$props;
-	const parent = getContext(ROUTE);
-	const router = getContext(ROUTER);
-	const route = new factory();
+	let { component } = $$props;
+	let { guard = undefined } = $$props;
+	let { propertyMapping = undefined } = $$props;
+	let { objectInstance = undefined } = $$props;
+	let { iteratorFor = undefined } = $$props;
+	let { objectFor = undefined } = $$props;
+	let { linkComponent = undefined } = $$props;
+
+	const route = new factory(path,
+	{
+			parent: getContext(ROUTE),
+			component,
+			iteratorFor,
+			objectFor,
+			linkComponent,
+			propertyMapping,
+			objectInstance,
+			guard
+		});
+
 	setContext(ROUTE, route);
-	route._path = path;
-	route.component = component;
-
-	if (parent) {
-		route._parent = parent;
-	}
-
-	if (propertyMapping) {
-		route._propertyMapping = propertyMapping;
-	}
-
-	if (objectInstance) {
-		route._objectInstance = objectInstance;
-	}
-
-	if (iteratorFor) {
-		route.iteratorFor = iteratorFor;
-	}
-
-	if (objectFor) {
-		route.objectFor = objectFor;
-	}
-
-	if (linkComponent) {
-		route.linkComponent = linkComponent;
-	}
-
-	if (guards) {
-		if (Array.isArray(guards)) {
-			switch (guards.length) {
-				case 1:
-					route._guard = guards[0];
-					break;
-				default:
-					route._guard = sequenceGuard(guards);
-			}
-		} else {
-			route._guard = guards;
-		}
-	}
-
+	const router = getContext(ROUTER);
 	router.addRoute(route);
 
 	$$self.$$set = $$props => {
 		if ("path" in $$props) $$invalidate(3, path = $$props.path);
 		if ("href" in $$props) $$invalidate(0, href = $$props.href);
-		if ("component" in $$props) $$invalidate(4, component = $$props.component);
-		if ("guards" in $$props) $$invalidate(5, guards = $$props.guards);
-		if ("propertyMapping" in $$props) $$invalidate(6, propertyMapping = $$props.propertyMapping);
-		if ("objectInstance" in $$props) $$invalidate(7, objectInstance = $$props.objectInstance);
-		if ("iteratorFor" in $$props) $$invalidate(8, iteratorFor = $$props.iteratorFor);
-		if ("objectFor" in $$props) $$invalidate(9, objectFor = $$props.objectFor);
-		if ("linkComponent" in $$props) $$invalidate(10, linkComponent = $$props.linkComponent);
-		if ("factory" in $$props) $$invalidate(11, factory = $$props.factory);
+		if ("factory" in $$props) $$invalidate(4, factory = $$props.factory);
+		if ("component" in $$props) $$invalidate(5, component = $$props.component);
+		if ("guard" in $$props) $$invalidate(6, guard = $$props.guard);
+		if ("propertyMapping" in $$props) $$invalidate(7, propertyMapping = $$props.propertyMapping);
+		if ("objectInstance" in $$props) $$invalidate(8, objectInstance = $$props.objectInstance);
+		if ("iteratorFor" in $$props) $$invalidate(9, iteratorFor = $$props.iteratorFor);
+		if ("objectFor" in $$props) $$invalidate(10, objectFor = $$props.objectFor);
+		if ("linkComponent" in $$props) $$invalidate(11, linkComponent = $$props.linkComponent);
 		if ("$$scope" in $$props) $$invalidate(12, $$scope = $$props.$$scope);
 	};
 
@@ -1674,14 +1662,14 @@ function instance$1($$self, $$props, $$invalidate) {
 		route,
 		router,
 		path,
+		factory,
 		component,
-		guards,
+		guard,
 		propertyMapping,
 		objectInstance,
 		iteratorFor,
 		objectFor,
 		linkComponent,
-		factory,
 		$$scope,
 		slots
 	];
@@ -1694,19 +1682,19 @@ class Route extends SvelteComponent {
 		init(this, options, instance$1, create_fragment$1, safe_not_equal, {
 			path: 3,
 			href: 0,
-			component: 4,
-			guards: 5,
-			propertyMapping: 6,
-			objectInstance: 7,
-			iteratorFor: 8,
-			objectFor: 9,
-			linkComponent: 10,
-			factory: 11
+			factory: 4,
+			component: 5,
+			guard: 6,
+			propertyMapping: 7,
+			objectInstance: 8,
+			iteratorFor: 9,
+			objectFor: 10,
+			linkComponent: 11
 		});
 	}
 }
 
-/* src/components/Link.svelte generated by Svelte v3.26.0 */
+/* src/components/Link.svelte generated by Svelte v3.29.4 */
 
 function create_fragment$2(ctx) {
 	let a;
@@ -1771,7 +1759,7 @@ function instance$2($$self, $$props, $$invalidate) {
 
 	function click(e) {
 		const ct = e.currentTarget;
-		window.dispatchEvent(new CustomEvent(BaseRouter.navigationEventType, { detail: { path: ct.pathname + ct.hash } }));
+		window.dispatchEvent(new CustomEvent(NAVIGATION_EVENT, { detail: { path: ct.pathname + ct.hash } }));
 	}
 
 	$$self.$$set = $$props => {
@@ -1789,7 +1777,7 @@ class Link extends SvelteComponent {
 	}
 }
 
-/* src/components/ObjectLink.svelte generated by Svelte v3.26.0 */
+/* src/components/ObjectLink.svelte generated by Svelte v3.29.4 */
 const get_noFound_slot_changes = dirty => ({});
 const get_noFound_slot_context = ctx => ({});
 
@@ -2098,7 +2086,7 @@ class ObjectLink extends SvelteComponent {
 	}
 }
 
-/* src/components/Outlet.svelte generated by Svelte v3.26.0 */
+/* src/components/Outlet.svelte generated by Svelte v3.29.4 */
 
 function create_fragment$4(ctx) {
 	let switch_instance;
@@ -2208,7 +2196,7 @@ class WaitingGuard extends Guard {
   }
 }
 
-/* tests/app/src/RouterState.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/RouterState.svelte generated by Svelte v3.29.4 */
 
 function add_css() {
 	var style = element("style");
@@ -2746,7 +2734,7 @@ class RouterState extends SvelteComponent {
 	}
 }
 
-/* tests/app/src/About.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/About.svelte generated by Svelte v3.29.4 */
 
 function create_fragment$6(ctx) {
 	let h2;
@@ -2786,7 +2774,7 @@ class About extends SvelteComponent {
 	}
 }
 
-/* tests/app/src/Articles.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/Articles.svelte generated by Svelte v3.29.4 */
 
 function get_each_context$1(ctx, list, i) {
 	const child_ctx = ctx.slice();
@@ -2956,7 +2944,7 @@ class Articles extends SvelteComponent {
 	}
 }
 
-/* tests/app/src/Article.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/Article.svelte generated by Svelte v3.29.4 */
 
 function add_css$1() {
 	var style = element("style");
@@ -2967,20 +2955,22 @@ function add_css$1() {
 
 // (31:0) {:else}
 function create_else_block$2(ctx) {
-	let t;
+	let h2;
 
 	return {
 		c() {
-			t = text("No such article");
+			h2 = element("h2");
+			h2.textContent = "No such article";
+			attr(h2, "class", "routetitle");
 		},
 		m(target, anchor) {
-			insert(target, t, anchor);
+			insert(target, h2, anchor);
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(t);
+			if (detaching) detach(h2);
 		}
 	};
 }
@@ -3250,7 +3240,7 @@ class Article extends SvelteComponent {
 	}
 }
 
-/* tests/app/src/ArticleLink.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/ArticleLink.svelte generated by Svelte v3.29.4 */
 
 function create_fragment$9(ctx) {
 	let t0_value = /*object*/ ctx[0].name + "";
@@ -3305,7 +3295,7 @@ class ArticleLink extends SvelteComponent {
 	}
 }
 
-/* tests/app/src/Categories.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/Categories.svelte generated by Svelte v3.29.4 */
 
 function get_each_context$2(ctx, list, i) {
 	const child_ctx = ctx.slice();
@@ -3469,7 +3459,7 @@ class Categories extends SvelteComponent {
 	}
 }
 
-/* tests/app/src/Category.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/Category.svelte generated by Svelte v3.29.4 */
 
 function get_each_context$3(ctx, list, i) {
 	const child_ctx = ctx.slice();
@@ -3479,20 +3469,22 @@ function get_each_context$3(ctx, list, i) {
 
 // (17:0) {:else}
 function create_else_block$3(ctx) {
-	let t;
+	let h2;
 
 	return {
 		c() {
-			t = text("No such category");
+			h2 = element("h2");
+			h2.textContent = "No such category";
+			attr(h2, "class", "routetitle");
 		},
 		m(target, anchor) {
-			insert(target, t, anchor);
+			insert(target, h2, anchor);
 		},
 		p: noop,
 		i: noop,
 		o: noop,
 		d(detaching) {
-			if (detaching) detach(t);
+			if (detaching) detach(h2);
 		}
 	};
 }
@@ -3729,7 +3721,7 @@ class Category extends SvelteComponent {
 	}
 }
 
-/* tests/app/src/CategoryLink.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/CategoryLink.svelte generated by Svelte v3.29.4 */
 
 function create_fragment$c(ctx) {
 	let t_value = /*object*/ ctx[0].name + "";
@@ -3770,7 +3762,7 @@ class CategoryLink extends SvelteComponent {
 	}
 }
 
-/* tests/app/src/Login.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/Login.svelte generated by Svelte v3.29.4 */
 
 function create_if_block$5(ctx) {
 	let div;
@@ -3992,7 +3984,7 @@ class Login extends SvelteComponent {
 	}
 }
 
-/* tests/app/src/Home.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/Home.svelte generated by Svelte v3.29.4 */
 
 function create_fragment$e(ctx) {
 	let h2;
@@ -4016,7 +4008,7 @@ function create_fragment$e(ctx) {
 			t5 = space();
 			ul = element("ul");
 
-			ul.innerHTML = `<li>Navigate around with the links and buttons (notice how certain links become active depending on the path</li> 
+			ul.innerHTML = `<li>Navigate around with the links and buttons (notice how certain links become active depending on the path)</li> 
     <li>Try pressing the browsers&#39; back and forward buttons</li> 
     <li>Manually change the URL&#39;s path</li> 
     <li>Try refreshing the page</li> 
@@ -4055,7 +4047,7 @@ class Home extends SvelteComponent {
 	}
 }
 
-/* tests/app/src/NoWay.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/NoWay.svelte generated by Svelte v3.29.4 */
 
 function create_fragment$f(ctx) {
 	let h2;
@@ -4089,7 +4081,7 @@ class NoWay extends SvelteComponent {
 	}
 }
 
-/* tests/app/src/Waiting.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/Waiting.svelte generated by Svelte v3.29.4 */
 
 function create_fragment$g(ctx) {
 	let h1;
@@ -4140,7 +4132,7 @@ class Waiting extends SvelteComponent {
 	}
 }
 
-/* tests/app/src/App.svelte generated by Svelte v3.26.0 */
+/* tests/app/src/App.svelte generated by Svelte v3.29.4 */
 
 function create_default_slot_5(ctx) {
 	let t;
@@ -4158,7 +4150,7 @@ function create_default_slot_5(ctx) {
 	};
 }
 
-// (42:8) <Route path="/about" component={About}>
+// (41:8) <Route path="/about" component={About}>
 function create_default_slot_4(ctx) {
 	let t;
 
@@ -4175,7 +4167,7 @@ function create_default_slot_4(ctx) {
 	};
 }
 
-// (45:8) <Route           path="/article"           factory={IteratorStoreRoute}           iteratorFor={articleIterator}           guards={[enshureSession, waitingGuard]}           component={Articles}>
+// (44:8) <Route           path="/article"           factory={IteratorStoreRoute}           iteratorFor={articleIterator}           guard={[enshureSession, waitingGuard]}           component={Articles}>
 function create_default_slot_3(ctx) {
 	let t;
 	let route;
@@ -4218,7 +4210,7 @@ function create_default_slot_3(ctx) {
 	};
 }
 
-// (61:8) <Route           path="/category"           factory={IteratorStoreRoute}           iteratorFor={categoryIterator}           guards={[enshureSession, waitingGuard]}           component={Categories}>
+// (60:8) <Route           path="/category"           factory={IteratorStoreRoute}           iteratorFor={categoryIterator}           guard={[enshureSession, waitingGuard]}           component={Categories}>
 function create_default_slot_2(ctx) {
 	let t;
 	let route;
@@ -4261,7 +4253,7 @@ function create_default_slot_2(ctx) {
 	};
 }
 
-// (77:8) <Route path="/noway" guards={new AlwaysThrowGuard()} component={NoWay}>
+// (76:8) <Route path="/noway" guard={new AlwaysThrowGuard()} component={NoWay}>
 function create_default_slot_1$1(ctx) {
 	let t;
 
@@ -4278,7 +4270,7 @@ function create_default_slot_1$1(ctx) {
 	};
 }
 
-// (95:2) {#if showState}
+// (94:2) {#if showState}
 function create_if_block$6(ctx) {
 	let routerstate;
 	let current;
@@ -4307,7 +4299,7 @@ function create_if_block$6(ctx) {
 	};
 }
 
-// (37:0) <Router base="/components/svelte-guard-history-router/tests/app">
+// (36:0) <Router base="/components/svelte-guard-history-router/tests/app">
 function create_default_slot$2(ctx) {
 	let nav;
 	let route0;
@@ -4364,7 +4356,7 @@ function create_default_slot$2(ctx) {
 				path: "/article",
 				factory: IteratorStoreRoute,
 				iteratorFor: articleIterator,
-				guards: [/*enshureSession*/ ctx[2], /*waitingGuard*/ ctx[1]],
+				guard: [/*enshureSession*/ ctx[2], /*waitingGuard*/ ctx[1]],
 				component: Articles,
 				$$slots: { default: [create_default_slot_3] },
 				$$scope: { ctx }
@@ -4376,7 +4368,7 @@ function create_default_slot$2(ctx) {
 				path: "/category",
 				factory: IteratorStoreRoute,
 				iteratorFor: categoryIterator,
-				guards: [/*enshureSession*/ ctx[2], /*waitingGuard*/ ctx[1]],
+				guard: [/*enshureSession*/ ctx[2], /*waitingGuard*/ ctx[1]],
 				component: Categories,
 				$$slots: { default: [create_default_slot_2] },
 				$$scope: { ctx }
@@ -4386,7 +4378,7 @@ function create_default_slot$2(ctx) {
 	route4 = new Route({
 			props: {
 				path: "/noway",
-				guards: new AlwaysThrowGuard(),
+				guard: new AlwaysThrowGuard(),
 				component: NoWay,
 				$$slots: { default: [create_default_slot_1$1] },
 				$$scope: { ctx }
