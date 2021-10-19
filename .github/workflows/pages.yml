@@ -38,7 +38,7 @@ jobs:
           clean: false
       - uses: actions/setup-node@v1
         with:
-          node-version: 14.18.0
+          node-version: 14.18.1
       - run: |
           COMPONENTS="svelte-repository-provider svelte-websocket-store svelte-log-view svelte-session-manager svelte-common svelte-guard-history-router"
           for c in $COMPONENTS
